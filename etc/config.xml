@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Store/etc/config.xsd">
+    <default>
+        <payment>
+            <cardsave>
+                <active>0</active>
+                <model>CardsaveFacadeAdapter</model>
+                <title>Cardsave Direct Payments by Worldpay</title>
+                <show_logo>0</show_logo>
+                <ccfields>card_number,card_expiry_date,card_cvn</ccfields>
+                <payment_action>authorize_capture</payment_action>
+                <order_status>processing</order_status>
+                <mode>0</mode>
+                <gateway_url>cardsaveonlinepayments.com</gateway_url>
+                <vendor_prefix>mg2-</vendor_prefix>
+                <hash_method>MD5</hash_method>
+                <cctypes>AE,VI,MC,DI,JCB</cctypes>
+                <useccv>1</useccv>
+                <allowspecific>0</allowspecific>
+                <can_initialize>0</can_initialize>
+                <can_authorize>1</can_authorize>
+                <can_capture>1</can_capture>
+                <can_capture_partial>1</can_capture_partial>
+                <can_void>1</can_void>
+                <can_refund>1</can_refund>
+                <debug>1</debug>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>1</can_use_checkout>
+                <is_gateway>1</is_gateway>
+                <paymentInfoKeys>cc_type,card_number,card_expiry_date</paymentInfoKeys>
+            </cardsave>
+        </payment>
+    </default>
+</config>

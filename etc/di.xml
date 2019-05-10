@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="CardsaveConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="string">cardsave</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </virtualType>
+    <type name="Meetanshi\Cardsave\Gateway\Http\TransferFactory">
+        <arguments>
+            <argument name="config" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </type>
+    <type name="Meetanshi\Cardsave\Gateway\Http\RefundTransferFactory">
+        <arguments>
+            <argument name="config" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </type>
+    <type name="Meetanshi\Cardsave\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </type>
+    <virtualType name="CardsaveFacadeAdapter" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="string">cardsave</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form\Cc</argument>
+            <argument name="infoBlockType" xsi:type="string">Meetanshi\Cardsave\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">CardsaveValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">CardsaveValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">CardsaveCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">CardsaveDefaultValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveDefaultValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">CardsaveCountryValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">CardsaveConfig</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="initialize" xsi:type="string">Meetanshi\Cardsave\Gateway\Command\InitializeCommand</item>
+                <item name="authorize" xsi:type="string">CardsaveDirectGatewayCommand</item>
+                <item name="capture" xsi:type="string">CardsaveDirectGatewayCommand</item>
+                <item name="refund" xsi:type="string">CardsaveRefundGatewayCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Start Authorize Command -->
+    <virtualType name="CardsaveDirectGatewayCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CardsavePaymentBuilder</argument>
+            <argument name="transferFactory" xsi:type="object">CardsaveAuthorizeTransferFactory</argument>
+            <argument name="client" xsi:type="object">CardsaveCurlHttpClient</argument>
+            <argument name="handler" xsi:type="object">CardsaveDirectResponseHandler</argument>
+            <argument name="validator" xsi:type="object">Meetanshi\Cardsave\Gateway\Validator\Direct\ResponseValidator</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsavePaymentBuilder" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="card_details" xsi:type="string">Meetanshi\Cardsave\Gateway\Request\CardDetailsDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveAuthorizeTransferFactory" type="Meetanshi\Cardsave\Gateway\Http\TransferFactory">
+        <arguments>
+            <argument name="action" xsi:type="const">Meetanshi\Cardsave\Gateway\Request\AbstractDataBuilder::PAYMENT</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveDirectResponseHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="payment_details" xsi:type="string">Meetanshi\Cardsave\Gateway\Response\PaymentDetailsHandler</item>
+                <item name="response_messages" xsi:type="string">Meetanshi\Cardsave\Gateway\Response\ResponseMessagesHandler</item>
+                <item name="card_details" xsi:type="string">Meetanshi\Cardsave\Gateway\Response\Direct\CardDetailsHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveCurlHttpClient" type="Meetanshi\Cardsave\Gateway\Http\Client\Curl">
+        <arguments>
+            <argument name="logger" xsi:type="object">CardsaveLogger</argument>
+            <argument name="converter" xsi:type="object">Meetanshi\Cardsave\Gateway\Http\Converter\XmlToArray</argument>
+        </arguments>
+    </virtualType>
+    <!-- End Authorize Command -->
+
+    <!-- Start Refund Command -->
+    <virtualType name="CardsaveRefundGatewayCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CardsaveRefundDataBuilder</argument>
+            <argument name="transferFactory" xsi:type="object">CardsaveRefundTransferFactory</argument>
+            <argument name="client" xsi:type="object">CardsaveCurlHttpClient</argument>
+            <argument name="validator" xsi:type="object">Meetanshi\Cardsave\Gateway\Validator\RefundValidator</argument>
+            <argument name="handler" xsi:type="object">CardsaveRefundResponseHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveRefundTransferFactory" type="Meetanshi\Cardsave\Gateway\Http\RefundTransferFactory">
+        <arguments>
+            <argument name="action" xsi:type="const">Meetanshi\Cardsave\Gateway\Request\AbstractDataBuilder::REFUND</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveRefundDataBuilder" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="refund_data" xsi:type="string">Meetanshi\Cardsave\Gateway\Request\RefundDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CardsaveRefundResponseHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="refund" xsi:type="string">Meetanshi\Cardsave\Gateway\Response\TransactionRefundHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <!-- End Refund Command -->
+</config>
